@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Subjunctive Learner</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#faf3e6;--bg2:#f0e2c8;--ink:#4a3521;--card:rgba(255,255,255,.68);--acc:#b8875a;--acc2:#8a6238;--ok:#5a9a6a;--bad:#c4574a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a211a;--bg2:#3a2d22;--ink:#f3e8d8;--card:rgba(70,56,44,.6)}}
+:root[data-theme="dark"]{--bg:#2a211a;--bg2:#3a2d22;--ink:#f3e8d8;--card:rgba(70,56,44,.6)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;overflow-x:hidden}
+body{background:linear-gradient(160deg,var(--bg),var(--bg2));color:var(--ink);font-family:'Sarabun',system-ui,sans-serif;font-size:17px}
+#app{max-width:720px;margin:0 auto;padding:64px 14px 30px}
+.top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;display:flex;justify-content:space-between;padding:10px 14px;z-index:5;max-width:720px;margin:auto}
+.g{background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.5);border-radius:22px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(120,80,40,.12)}
+.b{font:inherit;color:#fff;background:var(--acc);border:0;border-radius:16px;padding:14px 18px;min-height:52px;font-weight:800;box-shadow:0 5px 0 var(--acc2);cursor:pointer;transition:.08s;width:100%;margin:6px 0}
+.b:active{transform:translateY(4px);box-shadow:0 1px 0 var(--acc2)}
+.b.s{background:var(--card);color:var(--ink);box-shadow:0 5px 0 rgba(138,98,56,.35)}
+.b.sm{width:auto;padding:8px 14px;min-height:44px;margin:0}
+.b.ok{background:var(--ok);box-shadow:0 5px 0 #3d6e4a}.b.no{background:var(--bad);box-shadow:0 5px 0 #8f3a30}
+.b:disabled{opacity:.45}
+h1,h2{margin:.2em 0}.c{text-align:center}
+input{font:inherit;width:100%;padding:12px;border-radius:14px;border:2px solid var(--acc);background:rgba(255,255,255,.8);color:#4a3521;margin:5px 0}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.fl{font-size:64px;display:inline-block;animation:fl 3s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-10px) rotate(4deg)}}
+.sp{animation:sp 1.6s infinite}@keyframes sp{50%{filter:drop-shadow(0 0 10px gold)}}
+.shake{animation:sh .35s}@keyframes sh{20%{transform:translateX(-9px)}50%{transform:translateX(9px)}80%{transform:translateX(-5px)}}
+.av{font-size:36px;padding:8px;min-height:60px}.av.on{outline:4px solid var(--acc);border-radius:16px;background:#fff8}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lv{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;background:var(--card);color:var(--ink);box-shadow:0 5px 0 rgba(138,98,56,.35)}
+.lv small{opacity:.7;letter-spacing:1px}.lk{filter:grayscale(1)}
+.bar{height:14px;border-radius:9px;background:rgba(0,0,0,.12);overflow:hidden}.bar i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.bar.t i{background:var(--acc)}.bar.h i{background:var(--bad)}
+.q{font-size:22px;font-weight:600;line-height:1.5}
+.bl{display:inline-block;min-width:70px;border-bottom:3px solid var(--acc)}
+.chip{display:inline-block;margin:4px}
+.fb{min-height:28px;font-weight:800}
+.big{font-size:80px}
+ul{padding-left:20px;margin:6px 0}li{margin:3px 0}
+code,.tag{background:rgba(184,135,90,.2);border-radius:8px;padding:1px 7px}
+.cert{border:8px double var(--acc2);background:#fffdf6;color:#4a3521;text-align:center;padding:26px;border-radius:12px}
+#cf{position:fixed;inset:0;pointer-events:none;z-index:9}
+@media print{body *{visibility:hidden}#cert,#cert *{visibility:visible}#cert{position:absolute;left:0;top:0;width:100%}}
+</style>
+</head>
+<body>
+<div class="top"><button class="b s sm" onclick="home()">🏠</button><div class="row" style="flex:none"><button class="b s sm" onclick="daily()">🎁</button><button class="b s sm" onclick="teach()">🔑</button></div></div>
+<div id="app"></div>
+<canvas id="cf"></canvas>
+<script>
+const $=s=>document.querySelector(s),shuf=a=>a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+let D={p:{},cur:null,daily:0};
+try{D=JSON.parse(localStorage.getItem('sl'))||D}catch(e){}
+const save=()=>{try{localStorage.setItem('sl',JSON.stringify(D))}catch(e){}};
+const me=()=>D.p[D.cur],tot=p=>Object.values((p||me()).st).reduce((a,b)=>a+b,0);
+const AV=['🦊','🐼','🐯','🐨'];
+const L=[{n:'Recognize',m:'recog'},{n:'Fill in the Blank',m:'fill'},{n:'Error Correction',m:'det'},{n:'Trigger Words',m:'fill'},{n:'Mixed Grammar',m:'tf'},{n:'Sentence Transformation',m:'build'},{n:'Context (Rush)',m:'fill',t:12},{n:'Production',m:'build'},{n:'Boss Battle',m:'boss'},{n:'Challenge Boss',m:'boss',t:10}];
+const RQ=[0,3,6,9,12,15,18,21,24,24];
+const FILL=[["The doctor recommends that he ___ more water.","drink","drinks","drank"],["It is essential that she ___ at the airport by 6.","be","is","are"],["My parents insist that I ___ home before ten.","come","comes","came"],["The rules require that every student ___ a uniform.","wear","wears","wearing"],["It is vital that the report ___ finished today.","be","is","being"],["The manager demanded that he ___ the meeting.","attend","attends","attended"],["I suggest that Tom ___ a doctor.","see","sees","saw"],["It is important that nobody ___ late.","be","is","are"],["The judge ordered that the suspect ___ released.","be","was","is"],["We propose that she ___ the project.","lead","leads","led"]];
+const REC=[["She suggested that he take a taxi.","She suggested that he takes a taxi."],["It is essential that he be present.","It is essential that he is present."],["They insist that she leave now.","They insist that she leaves now."],["I recommend that Anna study harder.","I recommend that Anna studies harder."],["The boss demands that we finish early.","The boss demands that we finished early."],["It is crucial that the door be locked.","It is crucial that the door is locked."]];
+const DET=[["He insists that she goes to the party.",4,"go"],["It is vital that the room is clean.",6,"be"],["I suggest that he studies more.",4,"study"],["The teacher requires that everyone brings a pen.",5,"bring"],["We recommend that she takes a rest.",4,"take"],["It is essential that he not is late.",6,"be"]];
+const BLD=["The teacher insists that every student be quiet.","It is essential that she take the medicine.","We recommend that he not drive tonight.","They demand that the ticket be refunded.","I suggest that she study every day.","It is vital that everyone arrive on time."];
+const TF=[["It is important that he be honest.",1],["She insists that he goes now.",0],["I recommend that she takes the bus.",0],["They suggested that he leave early.",1],["The doctor advised that she rest more.",1],["It is essential that he is present.",0],["We demand that the rule be changed.",1],["He requested that she comes early.",0]];
+/* sound */
+let AC;const snd=ok=>{try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();[ok?[660,.1,0]:[200,.25,0],ok?[880,.15,.1]:[150,.25,.1]].forEach(([f,d,t])=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;o.type=ok?'sine':'sawtooth';g.gain.value=.08;o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d)})}catch(e){}};
+const say=t=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';speechSynthesis.speak(u)}catch(e){}};
+const R=h=>{$('#app').innerHTML=h;window.scrollTo(0,0)};
+/* confetti */
+function confetti(){const c=$('#cf'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;const P=Array.from({length:140},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height/2,v:2+Math.random()*4,r:4+Math.random()*6,c:`hsl(${Math.random()*60+15},80%,60%)`,a:Math.random()*6}));let f=0;(function d(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.y+=p.v;p.a+=.1;p.x+=Math.sin(p.a);x.fillStyle=p.c;x.fillRect(p.x,p.y,p.r,p.r*1.6)});if(f++<170)requestAnimationFrame(d);else x.clearRect(0,0,c.width,c.height)})()}
+/* home */
+let sel=0;
+function home(){clearInterval(G&&G.tm);const p=D.cur&&me()||{name:'',cls:'',no:'',av:0};sel=p.av||0;
+R(`<div class="c"><div class="fl sp">✈️</div><h1>Subjunctive Learner</h1><p>เรียนรู้เกี่ยวกับ Present Subjunctive</p></div>
+<div class="g"><b>ข้อมูลนักเรียน</b><input id="n" placeholder="ชื่อ" value="${p.name}"><div class="row"><input id="c" placeholder="ชั้น เช่น ม.5/2" value="${p.cls}"><input id="no" type="number" placeholder="เลขที่" value="${p.no}"></div>
+<div class="row">${AV.map((a,i)=>`<button class="b s av ${i==sel?'on':''}" onclick="sel=${i};document.querySelectorAll('.av').forEach((e,j)=>e.classList.toggle('on',j==${i}))">${a}</button>`).join('')}</div>
+<button class="b" onclick="start()">เริ่มเลย ✈️</button></div>`)}
+function start(){const n=$('#n').value.trim();if(!n){$('#n').focus();return}const cls=$('#c').value.trim(),no=$('#no').value,id=n+'|'+cls+'|'+no;
+D.p[id]=Object.assign({name:n,cls,no,st:{},sc:0,pl:0,coin:0},D.p[id]||{},{av:sel});D.cur=id;save();lesson()}
+/* lesson */
+function lesson(){R(`<h2>📖 Present Subjunctive คืออะไร?</h2>
+<div class="g">ใช้แสดง <b>ข้อเสนอแนะ คำสั่ง ความจำเป็น</b> ว่าสิ่งหนึ่ง "ควรเกิดขึ้น" ไม่ใช่บอกข้อเท็จจริง<br><br><span class="tag">S1 + trigger + (that) + S2 + <b>base verb</b></span>
+<p class="q" style="font-size:19px">She insists that he <b>go</b> now. <button class="b s sm" onclick="say('She insists that he go now.')">🔊</button></p></div>
+<div class="g"><b>1) กริยาตัวกระตุ้น</b><br>suggest, insist, recommend, demand, require, propose, request, advise, ask, order<br><b>2) คำคุณศัพท์ตัวกระตุ้น</b><br>important, essential, vital, necessary, crucial, imperative <small>(It is ___ that S + base verb)</small></div>
+<div class="g"><b>3) กฎสำคัญ</b><ul><li>ประธานตัวที่ 2 <b>ไม่เติม -s/-es</b>: ✅ he <code>study</code> ❌ he studies</li><li>Verb to be ใช้ <code>be</code> เสมอ (ไม่ใช่ is/am/are/was): ✅ It is vital that she <code>be</code> here.</li><li>ปฏิเสธ: <code>not + base verb</code> ✅ We recommend that he <code>not drive</code>.</li><li>ไม่เปลี่ยนตาม tense แม้กริยาหลักเป็นอดีต: ✅ He demanded that she <code>leave</code>.</li><li>Passive: <code>be + V3</code> ✅ It is essential that the form <code>be signed</code>.</li></ul>
+<b>ข้อควรระวัง:</b> "If I were you..." เป็น Past Subjunctive (คนละเรื่อง) ข้อสอบมักหลอกโดยใส่ is/was แทน be</div>
+<div class="g">🎓 ข้อสอบ TGAT / A-Level / TOEIC / TOEFL ชอบออกเรื่องนี้เป็น distractor<br><br><button class="b" onclick="map()">เข้าสู่ด่านเกม 🎮</button></div>`)}
+/* map */
+function map(){const p=me();R(`<div class="g c"><span class="big" style="font-size:52px">${AV[p.av]}</span><br><b>${p.name}</b> ${p.cls} · ⭐ ${tot()} · 🪙 ${p.coin} · 🏆 ${p.sc}</div>
+<div class="grid">${L.map((x,i)=>{const lk=tot()<RQ[i],s=p.st[i]||0;return `<button class="b lv ${lk?'lk':''}" ${lk?'disabled':''} onclick="play(${i})"><small>✈️ GATE ${String(i+1).padStart(2,'0')}</small><b>${x.n}</b><span>${lk?'🔒 '+RQ[i]+' ⭐':'⭐'.repeat(s)+'☆'.repeat(3-s)}</span></button>`}).join('')}</div>
+<div class="row"><button class="b s" onclick="lesson()">📖 ตำรา</button><button class="b s" onclick="cert()">🏅 ใบประกาศ</button></div>`)}
+/* game */
+let G={};
+function play(l){const m=L[l].m;let qs;
+if(m=='fill'||m=='boss')qs=shuf(FILL).slice(0,m=='boss'?10:5).map(f=>({s:f[0],o:shuf(f.slice(1)),a:f[1]}));
+else if(m=='recog')qs=shuf(REC).slice(0,5).map(r=>({o:shuf(r),a:r[0]}));
+else if(m=='tf')qs=shuf(TF).slice(0,5).map(t=>({s:t[0],a:t[1]}));
+else if(m=='det')qs=shuf(DET).slice(0,5).map(d=>({w:d[0].split(' '),a:d[1],f:d[2],s:d[0]}));
+else qs=shuf(BLD).slice(0,5).map(s=>{const W=s.split(' ');return {s,W,pool:shuf(W.map((_,i)=>i)),ch:[]}});
+G={l,m,qs,i:0,ok:0,sc:0,combo:0,hp:3,bh:100};nq()}
+function nq(){G.lock=0;const q=G.qs[G.i],l=L[G.l],m=G.m;let h='';
+const hud=m=='boss'?`<div class="g"><div class="c"><span class="big fl" style="font-size:56px">👾</span></div><div class="bar h"><i style="width:${Math.max(G.bh,0)}%"></i></div><div class="c">${'❤️'.repeat(G.hp)||'💀'} · Combo x${G.combo}</div></div>`:`<div class="g"><div class="bar"><i style="width:${G.i/G.qs.length*100}%"></i></div><div class="c">ข้อ ${G.i+1}/${G.qs.length} · Combo x${G.combo} · 🏆 ${G.sc}</div></div>`;
+const tm=l.t?`<div class="bar t"><i id="tb" style="width:100%"></i></div>`:'';
+let body='';
+if(m=='fill'||m=='boss')body=`<p class="q">${q.s.replace('___','<span class="bl">&nbsp;</span>')}</p>`+q.o.map(o=>`<button class="b s" onclick="ans(${o==q.a})">${o}</button>`).join('');
+if(m=='recog')body=`<p>เลือกประโยคที่ใช้ Present Subjunctive ถูกต้อง</p>`+q.o.map(o=>`<button class="b s" onclick="ans(${o==q.a})">${o}</button>`).join('');
+if(m=='tf')body=`<p>💣 ประโยคนี้ถูกต้องไหม?</p><p class="q">${q.s}</p><div class="row"><button class="b ok" onclick="ans(${q.a==1})">✅ Correct</button><button class="b no" onclick="ans(${q.a==0})">❌ Incorrect</button></div>`;
+if(m=='det')body=`<p>🔍 คลิกคำที่ผิด</p><p>`+q.w.map((w,i)=>`<button class="b s sm chip" onclick="ans(${i==q.a},'ควรเป็น: <b>${q.f}</b>')">${w}</button>`).join('')+`</p>`;
+if(m=='build')body=`<p>เรียงคำให้เป็นประโยคที่ถูกต้อง</p><div id="bd"></div>`;
+R(hud+tm+`<div class="g" id="q">${body}<div class="fb c" id="fb"></div></div><button class="b s sm" onclick="map()">⬅ ออก</button>`);
+if(m=='build')bd();
+if(l.t){let t=l.t,T=l.t;G.tm=setInterval(()=>{t-=.1;const b=$('#tb');if(b)b.style.width=Math.max(t/T*100,0)+'%';if(t<=0){clearInterval(G.tm);ans(false,'หมดเวลา ⏰')}},100)}}
+function bd(){const q=G.qs[G.i];$('#bd').innerHTML=`<div class="g" style="min-height:64px">${q.ch.map((i,k)=>`<button class="b sm chip" onclick="bx(${k})">${q.W[i]}</button>`).join('')}</div><div>${q.pool.filter(i=>!q.ch.includes(i)).map(i=>`<button class="b s sm chip" onclick="ba(${i})">${q.W[i]}</button>`).join('')}</div><button class="b" onclick="bc()" ${q.ch.length<q.W.length?'disabled':''}>ตรวจคำตอบ</button>`}
+const ba=i=>{if(!G.lock){G.qs[G.i].ch.push(i);bd()}},bx=k=>{if(!G.lock){G.qs[G.i].ch.splice(k,1);bd()}};
+function bc(){const q=G.qs[G.i];ans(q.ch.map(i=>q.W[i]).join(' ')==q.s,q.s)}
+function ans(ok,fb){if(G.lock)return;G.lock=1;clearInterval(G.tm);const q=G.qs[G.i];
+if(ok){G.ok++;G.combo++;G.sc+=10+Math.min(G.combo,5)*2;if(G.m=='boss')G.bh-=20+(G.combo>2?10:0)}else{G.combo=0;G.hp--;const e=$('#q');if(e){e.classList.add('shake');navigator.vibrate&&navigator.vibrate(120)}}
+snd(ok);const f=$('#fb');if(f){f.style.color=ok?'var(--ok)':'var(--bad)';f.innerHTML=(ok?'✅ ถูกต้อง! ':'❌ ลองใหม่ข้อหน้า ')+(fb||'')}
+if(q.a&&q.a!==true&&typeof q.a=='string'&&q.s)say(q.s.replace('___',q.a));
+setTimeout(()=>{G.i++;const boss=G.m=='boss';if(boss?(G.bh<=0||G.hp<=0||G.i>=G.qs.length):G.i>=G.qs.length)fin();else nq()},1100)}
+function fin(){const boss=G.m=='boss',N=G.qs.length;let s;
+if(boss)s=G.bh<=0?Math.max(G.hp,1):0;else{const a=G.ok/N;s=a>=.9?3:a>=.7?2:a>=.4?1:0}
+const p=me();p.st[G.l]=Math.max(p.st[G.l]||0,s);p.sc+=G.sc;p.pl++;p.coin+=s*5;save();if(s)confetti();
+R(`<div class="g c"><div class="big ${s?'fl sp':''}">${s?'🎉':'💪'}</div><h2>${s?'ผ่านด่าน!':boss?'บอสชนะ ลองอีกครั้ง':'ลองอีกครั้งนะ'}</h2><div style="font-size:44px">${'⭐'.repeat(s)+'☆'.repeat(3-s)}</div><p>ตอบถูก ${G.ok} ข้อ · คะแนน ${G.sc} · 🪙 +${s*5}</p>
+<button class="b" onclick="play(${G.l})">เล่นซ้ำ 🔁</button><button class="b s" onclick="map()">กลับแผนที่</button></div>`)}
+/* daily */
+function daily(){if(!D.cur){home();return}const w=D.daily+864e5-Date.now();
+if(w>0){const h=Math.floor(w/36e5),m=Math.floor(w%36e5/6e4);R(`<div class="g c"><div class="big">📦</div><h2>รับรางวัลแล้ววันนี้</h2><p>กลับมาอีกใน ${h} ชม. ${m} นาที</p><button class="b" onclick="map()">กลับ</button></div>`);return}
+R(`<div class="g c"><div class="big fl sp">🎁</div><h2>กล่องสุ่มรายวัน</h2><button class="b" onclick="openBox()">เปิดกล่อง!</button></div>`)}
+function openBox(){const c=10+Math.floor(Math.random()*41);me().coin+=c;D.daily=Date.now();save();confetti();snd(1);R(`<div class="g c"><div class="big sp">🪙</div><h2>+${c} เหรียญ!</h2><button class="b" onclick="map()">เยี่ยม!</button></div>`)}
+/* cert */
+function cert(){const p=me();if(tot()<15){R(`<div class="g c"><div class="big">🔒</div><p>สะสมให้ครบ 15 ⭐ เพื่อปลดล็อกใบประกาศ (ตอนนี้ ${tot()} ⭐)</p><button class="b" onclick="map()">กลับ</button></div>`);return}
+R(`<div id="cert" class="cert"><div style="font-size:50px">🏅</div><h1>Certificate of Achievement</h1><p>ขอมอบเกียรติบัตรฉบับนี้ให้แก่</p><h2>${p.name}</h2><p>ชั้น ${p.cls||'-'} เลขที่ ${p.no||'-'}</p><p>ผ่านการเรียนรู้ <b>Present Subjunctive</b><br>ได้ ⭐ ${tot()} ดวง · คะแนนรวม ${p.sc}</p><p>วันที่ ${new Date().toLocaleDateString('th-TH',{dateStyle:'long'})}</p></div>
+<button class="b" onclick="print()">🖨 พิมพ์ใบประกาศ</button><button class="b s" onclick="map()">กลับ</button>`)}
+/* teacher */
+let ch;
+function teach(){R(`<div class="g"><h2>🔑 ครู</h2><input id="pw" type="password" placeholder="รหัสผ่าน"><button class="b" onclick="$('#pw').value=='1234'?dash():($('#pw').value='',$('#pw').placeholder='รหัสไม่ถูกต้อง')">เข้าสู่ระบบ</button></div>`)}
+function dash(){const P=Object.values(D.p),top=P.reduce((a,b)=>Math.max(a,b.sc),0),pl=P.reduce((a,b)=>a+b.pl,0);
+R(`<h2>📊 Dashboard</h2><div class="grid"><div class="g c">👩‍🎓<br><b>${P.length}</b><br>นักเรียน</div><div class="g c">🏆<br><b>${top}</b><br>คะแนนสูงสุด</div><div class="g c" style="grid-column:span 2">🔁 รอบการเล่นสะสม <b>${pl}</b></div></div>
+<div class="g"><canvas id="ch" height="220"></canvas></div><button class="b no" id="rs" onclick="rst()">รีเซ็ตคะแนนทั้งห้อง</button><button class="b s" onclick="home()">ออก</button>`);
+if(window.Chart&&P.length){try{ch=new Chart($('#ch'),{type:'bar',data:{labels:P.map(p=>p.name),datasets:[{label:'คะแนน',data:P.map(p=>p.sc),backgroundColor:'#b8875a'}]},options:{plugins:{legend:{display:false}}}})}catch(e){}}}
+function rst(){const b=$('#rs');if(b.dataset.c){Object.values(D.p).forEach(p=>{p.st={};p.sc=0;p.pl=0;p.coin=0});save();dash()}else{b.dataset.c=1;b.textContent='กดอีกครั้งเพื่อยืนยันการรีเซ็ต'}}
+home();
+</script>
+</body>
+</html>
